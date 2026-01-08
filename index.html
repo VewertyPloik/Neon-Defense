@@ -1,11 +1,13 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Neon Defense</title>
+
 <style>
 body {
 margin: 0;
@@ -216,7 +218,8 @@ UPGRADE<br><span id="upg-cost">$350</span>
 <p><strong>Made by Vewerty Ploik</strong></p>
 <p>Defend your base from waves of blobs. Tap a weapon below, then tap the map to place it. Tap an existing weapon to upgrade it.</p>
 
-<h3>UPDATE LOG (v1.4)</h3>
+<h3>UPDATE LOG</h3>
+
 <ul style="font-size: 12px; color: #aaa;">
 <li>Added <b>The Queen</b> (Tier 6 Enemy)</li>
 <li>Added <b>Cannon</b> (High DMG Weapon)</li>
@@ -271,9 +274,9 @@ UPGRADE<br><span id="upg-cost">$350</span>
 <tr>
 <td><span class="blob-swatch" style="background:#800080; border:1px solid yellow;"></span><b>QUEEN</b></td>
 <td>500</td>
-<td>0.5x</td>
+<td>0.8x</td>
 <td>$200</td>
-<td>Is cool. Very slow.</td>
+<td>Is cool. Fast for a boss.</td>
 </tr>
 </table>
 <p style="font-size: 10px; color:#666;">*Enemy HP scales +10 per Wave. Speed scales slightly per wave.</p>
@@ -289,30 +292,30 @@ UPGRADE<br><span id="upg-cost">$350</span>
 </tr>
 <tr>
 <td style="color:#0ff">Turret</td>
-<td>10</td>
+<td>8</td>
 <td>1.0s</td>
-<td>10.0</td>
+<td>8.0</td>
 <td>$50</td>
 </tr>
 <tr>
 <td style="color:#ff0">Sniper</td>
-<td>20</td>
+<td>45</td>
 <td>3.5s</td>
-<td>5.7</td>
+<td>12.9</td>
 <td>$300</td>
 </tr>
 <tr>
 <td style="color:#0f0">Tank</td>
-<td>50</td>
+<td>80</td>
 <td>5.0s</td>
-<td>10.0</td>
+<td>16.0</td>
 <td>$750</td>
 </tr>
 <tr>
 <td style="color:#fff">Cannon</td>
-<td>250</td>
+<td>215</td>
 <td>5.0s</td>
-<td>50.0</td>
+<td>43.0</td>
 <td>$1000</td>
 </tr>
 </table>
@@ -329,19 +332,20 @@ UPGRADE<br><span id="upg-cost">$350</span>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- CONFIGURATION ---
+// --- CONFIGURATION (UPDATED STATS) ---
 const TOWER_TYPES = {
 basic: { 
-name: "Turret", cost: 50, range: 120, damage: 10, cooldownFrames: 60, color: '#0ff', bulletSpeed: 8, maxLevel: 1 
+name: "Turret", cost: 50, range: 120, damage: 8, cooldownFrames: 60, color: '#0ff', bulletSpeed: 8, maxLevel: 1 
 },
 sniper: { 
-name: "Sniper", cost: 300, range: 400, damage: 20, cooldownFrames: 210, color: '#ff0', bulletSpeed: 15, maxLevel: 5 
+name: "Sniper", cost: 300, range: 400, damage: 45, cooldownFrames: 210, color: '#ff0', bulletSpeed: 15, maxLevel: 5 
 },
 tank: { 
-name: "Tank", cost: 750, range: 140, damage: 50, cooldownFrames: 300, color: '#0f0', bulletSpeed: 6, maxLevel: 5 
+name: "Tank", cost: 750, range: 140, damage: 80, cooldownFrames: 300, color: '#0f0', bulletSpeed: 6, maxLevel: 5 
 },
 cannon: {
-name: "Cannon", cost: 1000, range: 160, damage: 250, cooldownFrames: 300, color: '#fff', bulletSpeed: 5, maxLevel: 5
+name: "Cannon", cost: 1000, range: 160, damage: 215, cooldownFrames: 300, color: '#fff', bulletSpeed: 5, maxLevel: 5
+
 }
 };
 
@@ -413,8 +417,9 @@ this.tierIndex = tierIndex;
 this.radius = 14 + (tierIndex * 2);
 
 // Speed Calculation
-let baseSpeed = 0.6 + (wave * 0.05); 
-if (tierIndex === 5) baseSpeed = 0.3; // Queen is very slow
+let baseSpeed = 0.6 + (wave * 0.05);
+if (tierIndex === 5) baseSpeed = 0.8; // UPDATED QUEEN SPEED
+
 
 this.speed = baseSpeed;
 let tier = ENEMY_TIERS[tierIndex];

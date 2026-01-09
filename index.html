@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Defense</title>
+    <title>Neon Defense: Rebalanced Update</title>
     <style>
         body {
             margin: 0;
@@ -220,10 +220,11 @@
         
         <h3>UPDATE LOG v1.5</h3>
         <ul style="font-size: 12px; color: #aaa;">
+            <li><b>REBALANCED:</b> All blobs scale +0.10x speed/wave.</li>
+            <li>Added <b>Machine Gun, great for rapid-firing</li>
             <li>Added <b>THE KING</b> (Wave 30+, Gold Armor)</li>
-            <li>Bosses (Queen/Warrior/King) speed scales +0.25x/wave</li>
-<li>Added Machine Gun that has great speed for rapid-firing</li>
-            <li>Normal Blobs speed scales +0.50x/wave</li>
+            <li>Added <b>THE WARRIOR</b> (Wave 20+, Grey Armor)</li>
+            <li>Added <b>THE QUEEN</b> (Wave 15+, Crown)</li>
         </ul>
 
         <h3>ENEMY ENCYCLOPEDIA (NERDY STATS)</h3>
@@ -283,7 +284,7 @@
                 <td>W30+</td>
             </tr>
         </table>
-        <p style="font-size: 10px; color:#ff0;">*WARNING: Normal blobs +0.50x speed/wave. Bosses +0.25x speed/wave.</p>
+        <p style="font-size: 10px; color:#ff0;">*Speed Scaling: All blobs increase by 0.10x per wave.</p>
 
         <h3>WEAPON SCHEMATICS</h3>
         <table class="info-table">
@@ -439,12 +440,12 @@
                 let spawnWave = (tierIndex === 5) ? 15 : (tierIndex === 6) ? 20 : 30;
                 let wavesSinceSpawn = Math.max(0, wave - spawnWave);
                 
-                // Base 0.8x, scales by 0.25x per wave
-                baseSpeed = 0.8 + (wavesSinceSpawn * 0.25);
+                // Base 0.8x, scales by 0.10x per wave
+                baseSpeed = 0.8 + (wavesSinceSpawn * 0.10);
             } else {
                 // --- STANDARD BLOBS ---
-                // Base 0.6x, scales by 0.50x per wave
-                baseSpeed = 0.6 + (wave * 0.50); 
+                // Base 0.6x, scales by 0.10x per wave
+                baseSpeed = 0.6 + (wave * 0.10); 
             }
             
             this.speed = baseSpeed;

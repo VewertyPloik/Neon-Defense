@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Defense: Rebalanced Update</title>
+    <title>Neon Defense: 15% Reload / 5% Dmg</title>
     <style>
         body {
             margin: 0;
@@ -15,11 +15,12 @@
         }
         canvas { display: block; }
         
-        /* SCROLLBAR STYLE */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #0ff; border-radius: 4px; }
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #0ff; border-radius: 3px; }
 
+        /* UI LAYOUT */
         #ui-layer {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -51,27 +52,29 @@
             background: #222;
             border: 1px solid #0ff;
             color: #0ff;
-            width: 30px; height: 30px;
+            width: 35px; height: 35px;
             border-radius: 50%;
             text-align: center;
-            line-height: 28px;
+            line-height: 33px;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
             box-shadow: 0 0 10px #0ff;
             margin-top: 5px;
+            transition: transform 0.2s;
         }
+        #btn-info:active { transform: scale(0.9); }
 
         #high-score-box { color: #ff0; font-size: 14px; margin-top: 5px; text-shadow: 0 0 5px #ff0; }
         
         #controls-area {
             pointer-events: auto;
-            background: rgba(0,0,0,0.9);
-            min-height: 100px;
+            background: rgba(0,0,0,0.95);
+            min-height: 120px;
             display: flex;
             justify-content: center;
             align-items: center;
-            border-top: 1px solid #333;
+            border-top: 2px solid #333;
         }
         
         /* BUILD MENU */
@@ -95,55 +98,114 @@
             background: rgba(0, 255, 255, 0.1);
         }
         .tower-btn.selected { background: #0ff; color: #000; box-shadow: 0 0 15px #0ff; }
+        #btn-autocannon.affordable { border-color: #00ffff; box-shadow: 0 0 15px #00ffff; color: #fff; }
 
         /* UPGRADE MENU */
         #upgrade-menu {
             display: none; flex-direction: column; width: 100%; padding: 10px 20px; color: #fff;
         }
-        .upgrade-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .live-stats { font-size: 14px; color: #aaa; margin-bottom: 5px; font-family: monospace; }
-        .live-val { color: #fff; font-weight: bold; }
-        .upgrade-actions { display: flex; gap: 15px; justify-content: center; }
+        .upgrade-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .upgrade-row {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+            background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 5px;
+        }
+        .stat-label { font-size: 12px; color: #aaa; width: 120px; }
+        .stat-val { color: #fff; font-weight: bold; margin-right: 10px; }
+        
         .action-btn {
-            padding: 8px 15px; border-radius: 5px; border: 1px solid #fff;
+            padding: 6px 10px; border-radius: 4px; border: 1px solid #fff;
             background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;
-            font-weight: bold; flex: 1; text-align: center;
+            font-weight: bold; font-size: 11px; text-align: center; min-width: 70px;
         }
         .btn-upgrade { border-color: #0f0; color: #0f0; }
-        .btn-upgrade.disabled { border-color: #555; color: #555; background: transparent; }
+        .btn-upgrade:hover { background: rgba(0,255,0,0.1); }
+        .btn-upgrade.disabled { border-color: #555; color: #555; background: transparent; cursor: default; }
         .btn-close { border-color: #f00; color: #f00; max-width: 50px; }
 
-        /* INFO MODAL */
+        /* --- ADVANCED MANUAL MODAL --- */
         #info-modal {
             display: none;
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%; max-width: 600px; max-height: 80%;
-            background: rgba(10, 10, 10, 0.95);
+            width: 95%; height: 90%; max-width: 900px;
+            background: #080808;
             border: 2px solid #0ff;
-            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
             z-index: 100;
-            padding: 20px;
-            overflow-y: auto;
             pointer-events: auto;
             color: #ddd;
+            overflow: hidden; /* Inner scroll handled by flex */
+            flex-direction: column;
         }
-        #info-modal h2 { color: #0ff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
-        #info-modal h3 { color: #ff0; margin-top: 20px; margin-bottom: 5px; }
-        .info-close {
-            position: absolute; top: 10px; right: 10px;
-            color: #f00; border: 1px solid #f00; background: transparent;
-            font-size: 16px; cursor: pointer; padding: 5px 10px;
+
+        #manual-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
         }
-        .info-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        .info-table th, .info-table td { border: 1px solid #444; padding: 8px; text-align: left; }
-        .info-table th { background: #222; color: #0ff; }
-        .blob-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; }
+
+        /* Right Side Navigation */
+        #manual-nav {
+            width: 140px;
+            background: #111;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .nav-btn {
+            background: transparent;
+            color: #555;
+            border: none;
+            border-bottom: 1px solid #222;
+            padding: 15px 10px;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nav-btn:hover { color: #fff; background: #222; }
+        .nav-btn.active { color: #000; background: #0ff; border-left: 4px solid #fff; }
+
+        /* Left Side Content */
+        #manual-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .man-section { display: none; animation: fadeIn 0.3s; }
+        .man-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: #0ff; margin-top: 0; border-bottom: 2px solid #0ff; padding-bottom: 10px; font-size: 22px; }
+        h3 { color: #ff0; margin-top: 25px; margin-bottom: 10px; border-left: 3px solid #ff0; padding-left: 10px; }
+        p, li { font-size: 13px; line-height: 1.5; color: #ccc; }
+        strong { color: #fff; }
+        .highlight { color: #0ff; }
+        .warn { color: #f00; }
+
+        .info-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        .info-table th, .info-table td { border: 1px solid #333; padding: 6px; text-align: left; }
+        .info-table th { background: #1a1a1a; color: #0ff; }
+        .info-table tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+
+        #manual-close-btn {
+            position: absolute; bottom: 20px; right: 20px;
+            background: #f00; color: #fff; border: none;
+            padding: 10px 20px; font-weight: bold; cursor: pointer;
+            z-index: 10; border-radius: 4px;
+        }
 
         #game-over {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             text-align: center; color: white; display: none; pointer-events: auto;
-            background: rgba(0,0,0,0.9); padding: 30px; border: 2px solid #f0f;
+            background: rgba(0,0,0,0.95); padding: 30px; border: 2px solid #f0f;
             border-radius: 15px; box-shadow: 0 0 30px #f0f; z-index: 200;
         }
         h1 { margin: 0 0 20px 0; color: #f0f; }
@@ -166,7 +228,7 @@
                 <div id="stats-wave">Wave: 1</div>
                 <div id="high-score-box">High Score: 0</div>
             </div>
-            <div id="btn-info" onclick="toggleInfo()">i</div>
+            <div id="btn-info" onclick="toggleInfo()">?</div>
         </div>
         
         <div id="instruction">Tap map to set position</div>
@@ -174,38 +236,42 @@
         <div id="controls-area">
             <div id="build-menu">
                 <div id="btn-basic" class="tower-btn" onclick="selectTowerType('basic')">
-                    <b>Turret</b>
-                    $50
+                    <b>Turret</b> $50
                 </div>
                 <div id="btn-sniper" class="tower-btn" onclick="selectTowerType('sniper')">
-                    <b>Sniper</b>
-                    $300
+                    <b>Sniper</b> $300
                 </div>
                 <div id="btn-machinegun" class="tower-btn" onclick="selectTowerType('machinegun')">
-                    <b>M. Gun</b>
-                    $500
+                    <b>M. Gun</b> $500
                 </div>
                 <div id="btn-tank" class="tower-btn" onclick="selectTowerType('tank')">
-                    <b>Tank</b>
-                    $750
+                    <b>Tank</b> $750
                 </div>
                 <div id="btn-cannon" class="tower-btn" onclick="selectTowerType('cannon')">
-                    <b>Cannon</b>
-                    $1000
+                    <b>Cannon</b> $1000
+                </div>
+                <div id="btn-autocannon" class="tower-btn" onclick="selectTowerType('autocannon')">
+                    <b>Auto C.</b> $3500
                 </div>
             </div>
 
             <div id="upgrade-menu">
                 <div class="upgrade-header">
-                    <span id="upg-title">WEAPON (Lvl 1)</span>
+                    <span id="upg-title">WEAPON</span>
                     <button class="action-btn btn-close" onclick="closeUpgradeMenu()">X</button>
                 </div>
-                <div class="live-stats">
-                    Reload: <span id="upg-reload" class="live-val">0.0s</span>
+                <div class="upgrade-row">
+                    <div class="stat-label">RELOAD (Lv <span id="lvl-reload">1</span>)</div>
+                    <div class="stat-val" id="val-reload">1.0s</div>
+                    <button id="btn-buy-reload" class="action-btn btn-upgrade" onclick="buyReload()">
+                        +15%<br><span id="cost-reload">$100</span>
+                    </button>
                 </div>
-                <div class="upgrade-actions">
-                    <button id="btn-do-upgrade" class="action-btn btn-upgrade" onclick="performUpgrade()">
-                        UPGRADE<br><span id="upg-cost">$350</span>
+                <div class="upgrade-row">
+                    <div class="stat-label">DAMAGE (Lv <span id="lvl-damage">1</span>)</div>
+                    <div class="stat-val" id="val-damage">8</div>
+                    <button id="btn-buy-damage" class="action-btn btn-upgrade" onclick="buyDamage()">
+                        +5%<br><span id="cost-damage">$100</span>
                     </button>
                 </div>
             </div>
@@ -213,124 +279,131 @@
     </div>
 
     <div id="info-modal">
-        <button class="info-close" onclick="toggleInfo()">X</button>
-        <h2>NEON DEFENSE: MANUAL</h2>
-        <p><strong>Made by Vewerty Ploik</strong></p>
-        <p>Defend your base from waves of blobs. Tap a weapon below, then tap the map to place it. Tap an existing weapon to upgrade it.</p>
-        
-        <h3>UPDATE LOG v1.5</h3>
-        <ul style="font-size: 12px; color: #aaa;">
-            <li><b>REBALANCED:</b> All blobs scale +0.10x speed/wave.</li>
-            <li>Added <b>Machine Gun, great for rapid-firing</li>
-            <li>Added <b>THE KING</b> (Wave 30+, Gold Armor)</li>
-            <li>Added <b>THE WARRIOR</b> (Wave 20+, Grey Armor)</li>
-            <li>Added <b>THE QUEEN</b> (Wave 15+, Crown)</li>
-        </ul>
+        <div id="manual-container">
+            <div id="manual-content">
+                
+                <div id="sec-tutorial" class="man-section active">
+                    <h2>BEGINNER TUTORIAL</h2>
+                    <p>Welcome to Neon Defense. Your goal is to stop the blobs from reaching the end of the path.</p>
+                    
+                    <h3>Step 1: Building</h3>
+                    <p>Look at the bottom menu. Towers that light up (Cyan) are affordable. Tap a tower button (e.g., <b>Turret</b>), then tap anywhere on the black map to place it. </p>
+                    
+                    <h3>Step 2: Confirmation</h3>
+                    <p>A "Ghost" tower will appear. <br>Tap <b style="color:#0f0">✓</b> to confirm purchase.<br>Tap <b style="color:#f00">✕</b> to cancel.</p>
+                    
+                    <h3>Step 3: Upgrading</h3>
+                    <p>Tap on a tower you have already placed. The menu will change to the <b>Upgrade Interface</b>.</p>
 
-        <h3>ENEMY ENCYCLOPEDIA (NERDY STATS)</h3>
-        <table class="info-table">
-            <tr>
-                <th>Type</th>
-                <th>HP</th>
-                <th>Spd</th>
-                <th>Spawn</th>
-            </tr>
-            <tr>
-                <td><span class="blob-swatch" style="background:#87CEFA"></span>Blue</td>
-                <td>50</td>
-                <td>1.0x+</td>
-                <td>W1+</td>
-            </tr>
-            <tr>
-                <td><span class="blob-swatch" style="background:#90EE90"></span>Green</td>
-                <td>100</td>
-                <td>1.0x+</td>
-                <td>W3+</td>
-            </tr>
-            <tr>
-                <td><span class="blob-swatch" style="background:#FFB347"></span>Orange</td>
-                <td>180</td>
-                <td>1.0x+</td>
-                <td>W5+</td>
-            </tr>
-            <tr>
-                <td><span class="blob-swatch" style="background:#444"></span>Black</td>
-                <td>250</td>
-                <td>1.0x+</td>
-                <td>W7+</td>
-            </tr>
-            <tr>
-                <td><span class="blob-swatch" style="background:#FF4444"></span>Red</td>
-                <td>350</td>
-                <td>1.0x+</td>
-                <td>W10+</td>
-            </tr>
-            <tr>
-                <td><span class="blob-swatch" style="background:#800080; border:1px solid yellow;"></span><b>QUEEN</b></td>
-                <td>500</td>
-                <td>0.8x+</td>
-                <td>W15+</td>
-            </tr>
-            <tr>
-                <td><span class="blob-swatch" style="background:#D3D3D3; border:2px solid #555;"></span><b>WARRIOR</b></td>
-                <td>800</td>
-                <td>0.8x+</td>
-                <td>W20+</td>
-            </tr>
-            <tr>
-                <td><span class="blob-swatch" style="background:#FFD700; border:2px solid #fff;"></span><b>KING</b></td>
-                <td>2000</td>
-                <td>0.8x+</td>
-                <td>W30+</td>
-            </tr>
-        </table>
-        <p style="font-size: 10px; color:#ff0;">*Speed Scaling: All blobs increase by 0.10x per wave.</p>
+                    <h3>Step 4: Survival</h3>
+                    <p>Enemies get 0.10x faster every single wave. You must keep upgrading your damage to keep up with their HP.</p>
+                </div>
 
-        <h3>WEAPON SCHEMATICS</h3>
-        <table class="info-table">
-            <tr>
-                <th>Weapon</th>
-                <th>Dmg</th>
-                <th>Reload</th>
-                <th>DPS</th>
-                <th>Cost</th>
-            </tr>
-            <tr>
-                <td style="color:#0ff">Turret</td>
-                <td>8</td>
-                <td>1.0s</td>
-                <td>8.0</td>
-                <td>$50</td>
-            </tr>
-            <tr>
-                <td style="color:#ff0">Sniper</td>
-                <td>65</td>
-                <td>3.5s</td>
-                <td>18.6</td>
-                <td>$300</td>
-            </tr>
-            <tr>
-                <td style="color:#ffa500">M. Gun</td>
-                <td>8</td>
-                <td>0.3s</td>
-                <td>26.6</td>
-                <td>$500</td>
-            </tr>
-            <tr>
-                <td style="color:#0f0">Tank</td>
-                <td>165</td>
-                <td>5.0s</td>
-                <td>33.0</td>
-                <td>$750</td>
-            </tr>
-            <tr>
-                <td style="color:#fff">Cannon</td>
-                <td>200</td>
-                <td>5.0s</td>
-                <td>40.0</td>
-                <td>$1000</td>
-            </tr>
-        </table>
+                <div id="sec-towers" class="man-section">
+                    <h2>WEAPON DATABASE</h2>
+                    <p>Detailed stats for all defensive structures.</p>
+                    <table class="info-table">
+                        <tr>
+                            <th>Name</th>
+                            <th>Cost</th>
+                            <th>Base DMG</th>
+                            <th>Reload</th>
+                            <th>Upgrade (+DMG)</th>
+                        </tr>
+                        <tr>
+                            <td style="color:#0ff">Turret</td>
+                            <td>$50</td>
+                            <td>8</td>
+                            <td>1.0s</td>
+                            <td>+5%</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#ff0">Sniper</td>
+                            <td>$300</td>
+                            <td>65</td>
+                            <td>3.5s</td>
+                            <td>+5%</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#ffa500">M. Gun</td>
+                            <td>$500</td>
+                            <td>8</td>
+                            <td>0.3s</td>
+                            <td>+5%</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#0f0">Tank</td>
+                            <td>$750</td>
+                            <td>165</td>
+                            <td>5.0s</td>
+                            <td>+5%</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#fff">Cannon</td>
+                            <td>$1000</td>
+                            <td>200</td>
+                            <td>5.0s</td>
+                            <td>+5%</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#00ffff; border:1px solid #00ffff">Auto Cannon</td>
+                            <td>$3500</td>
+                            <td>450</td>
+                            <td>2.0s</td>
+                            <td>+5%</td>
+                        </tr>
+                    </table>
+                    <p style="font-size:11px; margin-top:5px;">*Reload speed reduces by 15% compounded per level.</p>
+                </div>
+
+                <div id="sec-enemies" class="man-section">
+                    <h2>ENEMY INTEL</h2>
+                    <p>Know your enemy to defeat them.</p>
+                    <table class="info-table">
+                        <tr><th>Type</th><th>HP</th><th>Spawn</th><th>Reward</th></tr>
+                        <tr><td style="color:#87CEFA">Blue</td><td>50</td><td>W1+</td><td>$15</td></tr>
+                        <tr><td style="color:#90EE90">Green</td><td>100</td><td>W3+</td><td>$25</td></tr>
+                        <tr><td style="color:#FFB347">Orange</td><td>180</td><td>W5+</td><td>$40</td></tr>
+                        <tr><td style="color:#aaa">Black</td><td>250</td><td>W7+</td><td>$60</td></tr>
+                        <tr><td style="color:#f55">Red</td><td>350</td><td>W10+</td><td>$100</td></tr>
+                        <tr><td style="color:#f0f">QUEEN</td><td>500</td><td>W15+</td><td>$200</td></tr>
+                        <tr><td style="color:#ccc">WARRIOR</td><td>800</td><td>W20+</td><td>$300</td></tr>
+                        <tr><td style="color:#ffd700">KING</td><td>2000</td><td>W30+</td><td>$500</td></tr>
+                    </table>
+                    
+                    <h3>Speed Scaling Math</h3>
+                    <p>Base Speed: 0.6<br>
+                    Wave Multiplier: <b>+0.10x per wave</b><br>
+                    <i>Example: By Wave 20, basic enemies are moving at 2.6x speed.</i></p>
+                </div>
+
+                <div id="sec-mechanics" class="man-section">
+                    <h2>ADVANCED MECHANICS</h2>
+                    
+                    <h3>Upgrade Cost Formula</h3>
+                    <p>Upgrade costs are calculated dynamically based on the tower's base cost.</p>
+                    <p class="highlight">Cost = BasePrice + (CurrentLevel * 50)</p>
+
+                    <h3>Reload Reduction</h3>
+                    <p>Reload time is multiplied by 0.85 per level (15% faster).</p>
+                    
+                    <h3>Damage Scaling</h3>
+                    <p>Damage is multiplied by 1.05 per level (5% increase).</p>
+
+                    <h3>Scoring</h3>
+                    <p>Your score is simply the number of waves survived. High scores are saved locally to your browser.</p>
+                </div>
+
+            </div>
+
+            <div id="manual-nav">
+                <button class="nav-btn active" onclick="navManual('sec-tutorial', this)">TUTORIAL</button>
+                <button class="nav-btn" onclick="navManual('sec-towers', this)">WEAPONS</button>
+                <button class="nav-btn" onclick="navManual('sec-enemies', this)">ENEMIES</button>
+                <button class="nav-btn" onclick="navManual('sec-mechanics', this)">MATH/MECH</button>
+                <button class="nav-btn" style="color:#f00; margin-top:auto;" onclick="toggleInfo()">CLOSE</button>
+            </div>
+        </div>
     </div>
 
     <div id="game-over">
@@ -344,22 +417,40 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
+    // --- MANUAL NAVIGATION LOGIC ---
+    window.navManual = function(secId, btnElement) {
+        // Hide all sections
+        const sections = document.querySelectorAll('.man-section');
+        sections.forEach(s => s.classList.remove('active'));
+        
+        // Show target
+        document.getElementById(secId).classList.add('active');
+        
+        // Update Buttons
+        const btns = document.querySelectorAll('.nav-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+    };
+
     // --- CONFIGURATION ---
     const TOWER_TYPES = {
         basic: { 
-            name: "Turret", cost: 50, range: 120, damage: 8, cooldownFrames: 60, color: '#0ff', bulletSpeed: 8, maxLevel: 1 
+            name: "Turret", cost: 50, range: 120, damage: 8, cooldownFrames: 60, color: '#0ff', bulletSpeed: 8, maxLevel: 5 
         },
         sniper: { 
             name: "Sniper", cost: 300, range: 400, damage: 65, cooldownFrames: 210, color: '#ff0', bulletSpeed: 15, maxLevel: 5 
         },
         machinegun: {
-            name: "M. Gun", cost: 500, range: 130, damage: 8, cooldownFrames: 18, color: '#FFA500', bulletSpeed: 10, maxLevel: 1
+            name: "M. Gun", cost: 500, range: 130, damage: 8, cooldownFrames: 18, color: '#FFA500', bulletSpeed: 10, maxLevel: 5 
         },
         tank: { 
             name: "Tank", cost: 750, range: 140, damage: 165, cooldownFrames: 300, color: '#0f0', bulletSpeed: 6, maxLevel: 5 
         },
         cannon: {
             name: "Cannon", cost: 1000, range: 160, damage: 200, cooldownFrames: 300, color: '#fff', bulletSpeed: 5, maxLevel: 5
+        },
+        autocannon: {
+            name: "Auto Cannon", cost: 3500, range: 200, damage: 450, cooldownFrames: 120, color: '#444', bulletSpeed: 6, maxLevel: 5
         }
     };
 
@@ -371,7 +462,7 @@
         { name: "Red",    hp: 350, color: '#FF4444', reward: 100 },
         { name: "Queen",  hp: 500, color: '#800080', reward: 200 },
         { name: "Warrior", hp: 800, color: '#D3D3D3', reward: 300 },
-        { name: "King",    hp: 2000, color: '#FFD700', reward: 500 } // Tier 7: KING
+        { name: "King",    hp: 2000, color: '#FFD700', reward: 500 }
     ];
 
     // --- GAME STATE ---
@@ -384,7 +475,6 @@
     let spawnTimer = 0;
     let highScore = localStorage.getItem('neonDefenseHighScore') || 0;
     
-    // Interaction State
     let selectedTowerType = null;
     let pendingTower = null;
     let selectedExistingTower = null;
@@ -433,18 +523,11 @@
             this.radius = 14 + (tierIndex * 2);
             
             let baseSpeed = 0;
-
             if (tierIndex >= 5) { 
-                // --- HEAVY BLOBS (Queen, Warrior, King) ---
-                // Queen(5): W15, Warrior(6): W20, King(7): W30
                 let spawnWave = (tierIndex === 5) ? 15 : (tierIndex === 6) ? 20 : 30;
                 let wavesSinceSpawn = Math.max(0, wave - spawnWave);
-                
-                // Base 0.8x, scales by 0.10x per wave
                 baseSpeed = 0.8 + (wavesSinceSpawn * 0.10);
             } else {
-                // --- STANDARD BLOBS ---
-                // Base 0.6x, scales by 0.10x per wave
                 baseSpeed = 0.6 + (wave * 0.10); 
             }
             
@@ -476,7 +559,6 @@
         }
 
         draw() {
-            // Body
             ctx.shadowBlur = 10;
             ctx.shadowColor = this.color;
             ctx.fillStyle = this.color;
@@ -489,43 +571,31 @@
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Draw QUEEN CROWN
-            if (this.tierIndex === 5) {
-                ctx.fillStyle = '#FFD700'; // Gold
+            if (this.tierIndex === 5) { // Queen
+                ctx.fillStyle = '#FFD700';
                 ctx.beginPath();
                 ctx.moveTo(this.x - 10, this.y - this.radius);
                 ctx.lineTo(this.x - 5, this.y - this.radius - 10);
                 ctx.lineTo(this.x, this.y - this.radius - 5);
                 ctx.lineTo(this.x + 5, this.y - this.radius - 10);
                 ctx.lineTo(this.x + 10, this.y - this.radius);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
+                ctx.closePath(); ctx.fill(); ctx.stroke();
             }
-
-            // Draw WARRIOR ARMOR (Dark Grey)
-            if (this.tierIndex === 6) {
+            if (this.tierIndex === 6) { // Warrior
                 ctx.fillStyle = '#555'; 
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius * 0.6, 0, Math.PI*2);
                 ctx.fill();
-                ctx.strokeStyle = '#222';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.stroke();
             }
-
-            // Draw KING ARMOR (Gold)
-            if (this.tierIndex === 7) {
+            if (this.tierIndex === 7) { // King
                 ctx.fillStyle = '#FFD700'; 
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius * 0.6, 0, Math.PI*2);
                 ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
             }
 
-            // HP Bar
             const barW = 24;
             ctx.fillStyle = '#333';
             ctx.fillRect(this.x - barW/2, this.y - this.radius - 8, barW, 4);
@@ -536,7 +606,6 @@
         takeDamage(amt) {
             this.hp -= amt;
             addFloatingText(amt, this.x, this.y - 20, '#fff');
-            
             if (this.hp <= 0) {
                 money += this.reward;
                 addFloatingText(`+$${this.reward}`, this.x, this.y, '#ff0');
@@ -559,15 +628,18 @@
     class Tower {
         constructor(x, y, typeKey) {
             this.x = x; this.y = y; this.typeKey = typeKey;
-            
             const base = TOWER_TYPES[typeKey];
             this.stats = { ...base }; 
-            
-            this.level = 1;
-            this.nextUpgradeCost = base.cost + 50; 
+            this.lvlReload = 1;
+            this.lvlDamage = 1;
+            this.currCooldown = this.stats.cooldownFrames;
+            this.currDamage = this.stats.damage;
             this.cooldown = 0;
             this.angle = 0;
         }
+
+        getCostReload() { return this.stats.cost + (this.lvlReload * 50); }
+        getCostDamage() { return this.stats.cost + (this.lvlDamage * 50); }
 
         update() {
             if (this.cooldown > 0) this.cooldown--;
@@ -584,19 +656,28 @@
             if (target) {
                 this.angle = Math.atan2(target.y - this.y, target.x - this.x);
                 if (this.cooldown <= 0) {
-                    projectiles.push(new Projectile(this.x, this.y, target, this.stats.damage, this.stats.bulletSpeed, this.stats.color, this.typeKey));
-                    this.cooldown = this.stats.cooldownFrames;
+                    projectiles.push(new Projectile(this.x, this.y, target, this.currDamage, this.stats.bulletSpeed, this.stats.color, this.typeKey));
+                    this.cooldown = this.currCooldown;
                 }
             }
         }
 
-        upgrade() {
-            if (this.level >= this.stats.maxLevel) return;
-            this.level++;
-            this.stats.cooldownFrames = Math.floor(this.stats.cooldownFrames * 0.8);
-            this.nextUpgradeCost += 50;
-            createExplosion(this.x, this.y, '#fff', 15);
-            addFloatingText("UPGRADED!", this.x, this.y - 30, '#0f0');
+        upgradeReload() {
+            if (this.lvlReload >= this.stats.maxLevel) return;
+            this.lvlReload++;
+            // CHANGE: 15% reduction (x 0.85)
+            this.currCooldown = Math.floor(this.currCooldown * 0.85);
+            createExplosion(this.x, this.y, '#0ff', 10);
+            addFloatingText("SPEED UP!", this.x, this.y - 30, '#0ff');
+        }
+
+        upgradeDamage() {
+            if (this.lvlDamage >= this.stats.maxLevel) return;
+            this.lvlDamage++;
+            // CHANGE: 5% increase (x 1.05), Math.ceil to ensure +1 minimum
+            this.currDamage = Math.ceil(this.currDamage * 1.05);
+            createExplosion(this.x, this.y, '#f00', 10);
+            addFloatingText("DMG UP!", this.x, this.y - 30, '#f00');
         }
 
         draw() {
@@ -607,13 +688,7 @@
                 ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.2)';
                 ctx.arc(this.x, this.y, this.stats.range, 0, Math.PI*2); ctx.stroke();
             }
-
             Tower.drawVisuals(this.x, this.y, this.angle, this.typeKey, false);
-            
-            if (this.level > 1) {
-                ctx.fillStyle = '#fff'; ctx.font = '10px Arial'; ctx.textAlign = 'center';
-                ctx.fillText(`Lv${this.level}`, this.x, this.y + 20);
-            }
         }
 
         static drawVisuals(x, y, angle, typeKey, isGhost) {
@@ -623,50 +698,64 @@
             
             let stats = TOWER_TYPES[typeKey];
 
-            // Base
-            if (typeKey === 'tank') {
+            if (typeKey === 'autocannon') {
+                ctx.fillStyle = '#222';
+                if(!isGhost) { 
+                    ctx.shadowBlur = 15; ctx.shadowColor = '#00ffff'; 
+                    ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2;
+                }
+                ctx.beginPath(); ctx.arc(0,0, 16, 0, Math.PI*2); ctx.fill(); 
+                if(!isGhost) ctx.stroke();
+                ctx.rotate(angle);
+                ctx.fillStyle = '#111';
+                ctx.fillRect(0, -10, 26, 20);
+                if(!isGhost) { ctx.strokeRect(0, -10, 26, 20); }
+                ctx.beginPath(); ctx.arc(0,0, 10, 0, Math.PI*2); ctx.fill();
+                if(!isGhost) ctx.stroke();
+            } 
+            else if (typeKey === 'tank') {
                 ctx.fillStyle = '#2E8B57';
                 if(!isGhost) { ctx.shadowBlur = 10; ctx.shadowColor = '#0f0'; }
                 ctx.fillRect(-12, -12, 24, 24);
-            } else if (typeKey === 'cannon') {
+                ctx.rotate(angle);
+                ctx.fillStyle = '#006400'; ctx.fillRect(0, -6, 22, 12);
+                ctx.beginPath(); ctx.arc(0,0, 9, 0, Math.PI*2); ctx.fill();
+            } 
+            else if (typeKey === 'cannon') {
                 ctx.fillStyle = '#444'; 
                 if(!isGhost) { ctx.shadowBlur = 10; ctx.shadowColor = '#fff'; }
                 ctx.beginPath(); ctx.arc(0,0, 14, 0, Math.PI*2); ctx.fill();
-            } else if (typeKey === 'machinegun') {
-                ctx.fillStyle = '#666'; // Metallic
-                if(!isGhost) { ctx.shadowBlur = 10; ctx.shadowColor = '#FFA500'; }
-                ctx.beginPath(); ctx.arc(0,0, 12, 0, Math.PI*2); ctx.fill();
-            } else {
-                ctx.fillStyle = '#222';
-                ctx.beginPath(); ctx.arc(0,0, 10, 0, Math.PI*2); ctx.fill();
-            }
-
-            ctx.rotate(angle);
-
-            // Turret/Barrel
-            if (typeKey === 'sniper') {
-                ctx.fillStyle = '#aaa'; ctx.fillRect(0, -2, 30, 4); 
-                ctx.fillStyle = stats.color; ctx.fillRect(-5, -5, 10, 10);
-            } else if (typeKey === 'tank') {
-                ctx.fillStyle = '#006400'; ctx.fillRect(0, -6, 22, 12);
-                ctx.beginPath(); ctx.arc(0,0, 9, 0, Math.PI*2); ctx.fill();
-            } else if (typeKey === 'cannon') {
+                ctx.rotate(angle);
                 ctx.fillStyle = '#111'; 
                 ctx.strokeStyle = '#666'; ctx.lineWidth = 1;
                 ctx.fillRect(0, -8, 20, 16); ctx.strokeRect(0, -8, 20, 16);
                 ctx.beginPath(); ctx.arc(0,0, 10, 0, Math.PI*2); ctx.fill();
-            } else if (typeKey === 'machinegun') {
+            } 
+            else if (typeKey === 'machinegun') {
+                ctx.fillStyle = '#666'; 
+                if(!isGhost) { ctx.shadowBlur = 10; ctx.shadowColor = '#FFA500'; }
+                ctx.beginPath(); ctx.arc(0,0, 12, 0, Math.PI*2); ctx.fill();
+                ctx.rotate(angle);
                 ctx.fillStyle = '#333';
-                // Three barrels
                 ctx.fillRect(0, -6, 18, 3);
                 ctx.fillRect(0, -1, 18, 3);
                 ctx.fillRect(0, 4, 18, 3);
                 ctx.fillStyle = '#FFA500'; ctx.fillRect(-4, -6, 8, 12);
-            } else {
+            } 
+            else if (typeKey === 'sniper') {
+                ctx.fillStyle = '#222';
+                ctx.beginPath(); ctx.arc(0,0, 10, 0, Math.PI*2); ctx.fill();
+                ctx.rotate(angle);
+                ctx.fillStyle = '#aaa'; ctx.fillRect(0, -2, 30, 4); 
+                ctx.fillStyle = stats.color; ctx.fillRect(-5, -5, 10, 10);
+            }
+            else { // Turret
+                ctx.fillStyle = '#222';
+                ctx.beginPath(); ctx.arc(0,0, 10, 0, Math.PI*2); ctx.fill();
+                ctx.rotate(angle);
                 ctx.fillStyle = stats.color; ctx.fillRect(0, -4, 18, 8);
                 ctx.fillStyle = '#fff'; ctx.fillRect(-5, -5, 10, 10);
             }
-
             ctx.restore();
         }
     }
@@ -692,20 +781,20 @@
             }
         }
         draw() {
+            if (this.typeKey === 'autocannon') {
+                ctx.shadowBlur = 5; ctx.shadowColor = '#00ffff';
+                ctx.fillStyle = '#fff'; ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(this.x, this.y, 6, 0, Math.PI*2); 
+                ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+                return;
+            }
             ctx.shadowBlur = 5; ctx.shadowColor = this.color;
             ctx.fillStyle = this.color;
             ctx.beginPath(); 
-            
-            if (this.typeKey === 'cannon') {
-                ctx.arc(this.x, this.y, 6, 0, Math.PI*2);
-            } else if (this.typeKey === 'machinegun') {
-                ctx.arc(this.x, this.y, 2, 0, Math.PI*2); // Small bullets
-            } else {
-                ctx.arc(this.x, this.y, 4, 0, Math.PI*2); 
-            }
-            
-            ctx.fill();
-            ctx.shadowBlur = 0; 
+            if (this.typeKey === 'cannon') ctx.arc(this.x, this.y, 6, 0, Math.PI*2);
+            else if (this.typeKey === 'machinegun') ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+            else ctx.arc(this.x, this.y, 4, 0, Math.PI*2); 
+            ctx.fill(); ctx.shadowBlur = 0; 
         }
     }
 
@@ -749,32 +838,20 @@
         spawnTimer++;
         if (spawnTimer >= interval) {
             spawnTimer = 0;
-            
-            let maxTier = Math.min(Math.floor((wave - 1) / 2), 5); // Default max is Queen
-            
+            let maxTier = Math.min(Math.floor((wave - 1) / 2), 5); 
             let roll = Math.random();
             let tierIndex = 0;
             
-            // KING Spawn (Wave 30+, 5% chance)
-            if (wave >= 30 && roll < 0.05) {
-                tierIndex = 7;
-            }
-            // WARRIOR Spawn (Wave 20+, 10% chance)
-            else if (wave >= 20 && roll < 0.10) {
-                tierIndex = 6;
-            }
-            // QUEEN Spawn (Wave 15+, 15% chance)
-            else if (wave >= 15 && roll < 0.20) { 
-                tierIndex = 5; 
-            }
+            if (wave >= 30 && roll < 0.05) tierIndex = 7; 
+            else if (wave >= 20 && roll < 0.10) tierIndex = 6;
+            else if (wave >= 15 && roll < 0.20) tierIndex = 5;
             else {
-                if (maxTier >= 4 && roll < 0.25) tierIndex = 4; // Red
-                else if (maxTier >= 3 && roll < 0.40) tierIndex = 3; // Black
-                else if (maxTier >= 2 && roll < 0.60) tierIndex = 2; // Orange
-                else if (maxTier >= 1 && roll < 0.80) tierIndex = 1; // Green
-                else tierIndex = 0; // Blue
+                if (maxTier >= 4 && roll < 0.25) tierIndex = 4;
+                else if (maxTier >= 3 && roll < 0.40) tierIndex = 3;
+                else if (maxTier >= 2 && roll < 0.60) tierIndex = 2;
+                else if (maxTier >= 1 && roll < 0.80) tierIndex = 1;
+                else tierIndex = 0;
             }
-
             enemies.push(new Enemy(tierIndex));
         }
     }
@@ -800,7 +877,6 @@
     function draw() {
         ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, width, height);
 
-        // Path
         ctx.save(); ctx.beginPath();
         if(waypoints.length > 0) ctx.moveTo(waypoints[0].x, waypoints[0].y);
         for(let i=1; i<waypoints.length; i++) ctx.lineTo(waypoints[i].x, waypoints[i].y);
@@ -849,7 +925,7 @@
         document.getElementById('stats-lives').innerText = `Lives: ${lives}`;
         document.getElementById('high-score-box').innerText = `High Score: ${highScore}`;
         
-        ['basic', 'sniper', 'machinegun', 'tank', 'cannon'].forEach(type => {
+        ['basic', 'sniper', 'machinegun', 'tank', 'cannon', 'autocannon'].forEach(type => {
             let btn = document.getElementById('btn-' + type);
             let cost = TOWER_TYPES[type].cost;
             if (money >= cost) btn.classList.add('affordable');
@@ -873,41 +949,86 @@
     function updateUpgradeMenuStatic() {
         if (!selectedExistingTower) return;
         const t = selectedExistingTower;
-        document.getElementById('upg-title').innerText = `${t.stats.name.toUpperCase()} (Lvl ${t.level})`;
-        const btn = document.getElementById('btn-do-upgrade');
-        const costSpan = document.getElementById('upg-cost');
+        document.getElementById('upg-title').innerText = t.stats.name.toUpperCase();
         
-        if (t.level >= t.stats.maxLevel) {
-            btn.classList.add('disabled'); btn.onclick = null; costSpan.innerText = "MAX LEVEL";
+        // --- RELOAD UI ---
+        const lvlReload = t.lvlReload;
+        document.getElementById('lvl-reload').innerText = lvlReload;
+        const btnReload = document.getElementById('btn-buy-reload');
+        const costReload = t.getCostReload();
+        
+        if (lvlReload >= t.stats.maxLevel) {
+            btnReload.classList.add('disabled'); btnReload.onclick = null;
+            document.getElementById('cost-reload').innerText = "MAX";
         } else {
-            costSpan.innerText = `$${t.nextUpgradeCost}`;
-            if (money >= t.nextUpgradeCost) {
-                btn.classList.remove('disabled'); btn.onclick = performUpgrade;
+            document.getElementById('cost-reload').innerText = `$${costReload}`;
+            if (money >= costReload) {
+                btnReload.classList.remove('disabled'); btnReload.onclick = buyReload;
             } else {
-                btn.classList.add('disabled'); btn.onclick = null;
+                btnReload.classList.add('disabled'); btnReload.onclick = null;
             }
         }
+
+        // --- DAMAGE UI ---
+        const lvlDamage = t.lvlDamage;
+        document.getElementById('lvl-damage').innerText = lvlDamage;
+        const btnDamage = document.getElementById('btn-buy-damage');
+        const costDamage = t.getCostDamage();
+        
+        if (lvlDamage >= t.stats.maxLevel) {
+            btnDamage.classList.add('disabled'); btnDamage.onclick = null;
+            document.getElementById('cost-damage').innerText = "MAX";
+        } else {
+            document.getElementById('cost-damage').innerText = `$${costDamage}`;
+            if (money >= costDamage) {
+                btnDamage.classList.remove('disabled'); btnDamage.onclick = buyDamage;
+            } else {
+                btnDamage.classList.add('disabled'); btnDamage.onclick = null;
+            }
+        }
+        
+        document.getElementById('val-damage').innerText = t.currDamage;
     }
 
     function updateUpgradeMenuLive() {
         if (!selectedExistingTower) return;
-        const time = (selectedExistingTower.cooldown / 60).toFixed(1);
-        document.getElementById('upg-reload').innerText = `${time}s`;
+        const time = (selectedExistingTower.currCooldown / 60).toFixed(1);
+        document.getElementById('val-reload').innerText = `${time}s`;
     }
 
     window.closeUpgradeMenu = function() { selectedExistingTower = null; updateUI(); }
 
-    window.performUpgrade = function() {
-        if (selectedExistingTower && money >= selectedExistingTower.nextUpgradeCost) {
-            money -= selectedExistingTower.nextUpgradeCost;
-            selectedExistingTower.upgrade();
-            updateUI();
+    window.buyReload = function() {
+        if (selectedExistingTower) {
+            let cost = selectedExistingTower.getCostReload();
+            if (money >= cost) {
+                money -= cost;
+                selectedExistingTower.upgradeReload();
+                updateUI();
+            }
+        }
+    }
+
+    window.buyDamage = function() {
+        if (selectedExistingTower) {
+            let cost = selectedExistingTower.getCostDamage();
+            if (money >= cost) {
+                money -= cost;
+                selectedExistingTower.upgradeDamage();
+                updateUI();
+            }
         }
     }
     
     window.toggleInfo = function() {
         const modal = document.getElementById('info-modal');
-        modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
+        // If opening, set default to tutorial
+        if (modal.style.display !== 'flex') {
+            modal.style.display = 'flex';
+            window.navManual('sec-tutorial', document.querySelector('.nav-btn'));
+        } else {
+            modal.style.display = 'none';
+        }
     }
 
     function checkGameOver() {
